@@ -29,7 +29,7 @@ zerops:
       # compilation. Both runtimes are fully available on PATH
       # during the build — no manual install needed.
       base:
-        - php@8.5
+        - php@8.4
         - nodejs@22
       buildCommands:
         # Production Composer install — no dev packages, classmap
@@ -129,7 +129,7 @@ zerops:
       # Same multi-base as prod — both PHP and Node available
       # during the build so Composer and npm can run.
       base:
-        - php@8.5
+        - php@8.4
         - nodejs@22
       buildCommands:
         # Full Composer install with dev packages — testing and
