@@ -46,7 +46,7 @@ composer test
 ## Architecture
 
 - **Routes** are defined entirely in `routes/web.php` — three closure-based routes: `/` (welcome page with DB status), `/health` (JSON health check used by Zerops readiness/liveness probes), `/status` (detailed JSON status).
-- **No controllers** — all logic lives in route closures given the minimal scope.
+- **Always use controllers** — never put application logic in route closures; closure-based routes break php artisan route:cache which is required for production deploys.
 - **Database**: PostgreSQL in production/dev (Zerops), SQLite in-memory for tests. Default Laravel migrations (users, cache, jobs tables).
 - **Frontend**: Vite + Tailwind CSS v4 via `@tailwindcss/vite` plugin. Entry points: `resources/css/app.css`, `resources/js/app.js`.
 - **Middleware**: Reverse proxy trust configured in `bootstrap/app.php` (`trustProxies(at: '*')`) — required for Zerops L7 balancer.
