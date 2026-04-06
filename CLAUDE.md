@@ -6,26 +6,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Minimal Laravel 13 app with PostgreSQL, demonstrating database connectivity, migrations, and health/status endpoints. Designed as a recipe for the [Zerops](https://zerops.io) deployment platform.
 
-## Commands
+## Development Environment
+
+The app runs on Zerops by default, even in dev — Nginx + PHP-FPM serve requests automatically (no `php artisan serve` needed). PHP changes take effect on the next request without restart.
+
+### Zerops dev (primary workflow)
 
 ```bash
-# Full local setup (install deps, generate key, migrate, build assets)
-composer setup
+# Start Vite dev server for frontend hot-reload (PHP is already running via FPM)
+npm run dev
 
-# Development (starts PHP server, queue worker, log tail, and Vite HMR concurrently)
-composer dev
-
-# Run tests (clears config cache first, uses SQLite in-memory per phpunit.xml)
+# Run tests (uses SQLite in-memory per phpunit.xml)
 composer test
 
-# Run a single test file
+# Run a single test
 php artisan test --filter=ExampleTest
 
 # Lint/format PHP
 ./vendor/bin/pint
 
-# Build frontend assets
+# Build frontend assets for production
 npm run build
+```
+
+### Purely local development
+
+```bash
+# Full local setup (install deps, generate key, migrate, build assets)
+composer setup
+
+# Start PHP server, queue worker, log tail, and Vite HMR concurrently
+composer dev
+
+# Tests and lint — same as above
+composer test
+./vendor/bin/pint
 ```
 
 ## Architecture
@@ -39,7 +54,9 @@ npm run build
 ## Deployment (Zerops)
 
 Configured in `zerops.yaml` with two setups:
-- **prod**: Optimized build (no dev deps, asset compilation, config/route/view caching at runtime).
+- **prod**: Optimized build (no dev deps, asset compilation, config/route/view caching at runtime). Readiness/health checks hit `/health`.
 - **dev**: Full source deployed for live editing via SSH, includes dev dependencies and Node runtime.
 
-Key gotcha: No `.env` file in Zerops — environment variables are injected as OS env vars. Creating a `.env` with empty values shadows them.
+Key gotchas:
+- **No `.env` file** — Zerops injects env vars at OS level. Creating a `.env` with empty values shadows them, causing `env()` to return `null`.
+- **Cache commands at runtime only** — `config:cache`, `route:cache`, `view:cache` bake absolute paths. Build runs at `/build/source/` but runtime serves from `/var/www/`, so caching during build breaks paths.
