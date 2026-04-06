@@ -193,7 +193,6 @@ Zerops terminates SSL at its L7 balancer and forwards requests via reverse proxy
     $middleware->trustProxies(at: '*');
 })
 ```
-
 <!-- #ZEROPS_EXTRACT_END:integration-guide# -->
 
 <!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
@@ -202,7 +201,7 @@ Zerops terminates SSL at its L7 balancer and forwards requests via reverse proxy
 
 - **No `.env` file** — Zerops injects environment variables as OS env vars. Creating a `.env` file with empty values shadows the OS vars, causing `env()` to return `null` for every key that appears in `.env` even if the platform has a value set.
 - **Cache commands in `initCommands`, not `buildCommands`** — `config:cache`, `route:cache`, and `view:cache` bake absolute paths into their cached files. The build container runs at `/build/source/` while the runtime serves from `/var/www/`. Caching during build produces paths like `/build/source/storage/...` that crash at runtime with "directory not found."
+- **`config()` not `env()` in application code** — After `config:cache` runs in production, `env()` returns `null` for keys not read during cache generation. Always use `config('key.subkey')` in controllers, models, and services — `env()` is only safe inside config files (`config/*.php`) where it's evaluated during the cache build. Code using `env()` appears to work in dev (no cache) but silently breaks in production.
 - **`APP_KEY` is project-level** — Laravel's encryption key must be shared across all services that read the same database (sessions, encrypted columns). Set it once at project level in Zerops; do not add it per-service or in `zerops.yaml envVariables`.
 - **PDO PostgreSQL extension** — The `php-nginx` base image includes `pdo_pgsql` out of the box. No `prepareCommands` or `apk add` needed for PostgreSQL connectivity.
-
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
