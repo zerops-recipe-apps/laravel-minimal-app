@@ -1,62 +1,26 @@
-# CLAUDE.md
+# laravel-minimal-app
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Laravel 13 starter with PostgreSQL + Vite — no Jetstream/Breeze; health + status endpoints; runtime-time artisan cache.
 
-## Project Overview
+## Zerops service facts
 
-Minimal Laravel 13 app with PostgreSQL, demonstrating database connectivity, migrations, and health/status endpoints. Designed as a recipe for the [Zerops](https://zerops.io) deployment platform.
+- HTTP port: `80` (document root `public/`)
+- Siblings: `db` (PostgreSQL) — env: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+- Runtime base: `php-nginx@8.4` (build on `php@8.4` + `nodejs@22`)
 
-## Development Environment
+## Zerops dev (hybrid)
 
-The app runs on Zerops by default, even in dev — Nginx + PHP-FPM serve requests automatically (no `php artisan serve` needed). PHP changes take effect on the next request without restart.
+Runtime (`php-nginx`) auto-serves PHP changes immediately — edit `.blade.php` / `.php` and they take effect on the next request.
 
-### Zerops dev (primary workflow)
+**Vite dev server is NOT auto-started.** For frontend asset HMR, the agent must start it manually:
 
-```bash
-# Start Vite dev server for frontend hot-reload (PHP is already running via FPM)
-npm run dev
+- Vite dev command: `npm run dev`
+- Build frontend assets (instead of HMR): `npm run build`
 
-# Run tests (uses SQLite in-memory per phpunit.xml)
-composer test
+**All platform operations (start/stop of Vite, deploy, env / scaling / storage / domains) go through the Zerops development workflow via `zcp` MCP tools. Don't shell out to `zcli`.**
 
-# Run a single test
-php artisan test --filter=ExampleTest
+## Notes
 
-# Lint/format PHP
-./vendor/bin/pint
-
-# Build frontend assets for production
-npm run build
-```
-
-### Purely local development
-
-```bash
-# Full local setup (install deps, generate key, migrate, build assets)
-composer setup
-
-# Start PHP server, queue worker, log tail, and Vite HMR concurrently
-composer dev
-
-# Tests and lint — same as above
-composer test
-./vendor/bin/pint
-```
-
-## Architecture
-
-- **Routes** are defined entirely in `routes/web.php` — three closure-based routes: `/` (welcome page with DB status), `/health` (JSON health check used by Zerops readiness/liveness probes), `/status` (detailed JSON status).
-- **Always use controllers** — never put application logic in route closures; closure-based routes break php artisan route:cache which is required for production deploys.
-- **Database**: PostgreSQL in production/dev (Zerops), SQLite in-memory for tests. Default Laravel migrations (users, cache, jobs tables).
-- **Frontend**: Vite + Tailwind CSS v4 via `@tailwindcss/vite` plugin. Entry points: `resources/css/app.css`, `resources/js/app.js`.
-- **Middleware**: Reverse proxy trust configured in `bootstrap/app.php` (`trustProxies(at: '*')`) — required for Zerops L7 balancer.
-
-## Deployment (Zerops)
-
-Configured in `zerops.yaml` with two setups:
-- **prod**: Optimized build (no dev deps, asset compilation, config/route/view caching at runtime). Readiness/health checks hit `/health`.
-- **dev**: Full source deployed for live editing via SSH, includes dev dependencies and Node runtime.
-
-Key gotchas:
-- **No `.env` file** — Zerops injects env vars at OS level. Creating a `.env` with empty values shadows them, causing `env()` to return `null`.
-- **Cache commands at runtime only** — `config:cache`, `route:cache`, `view:cache` bake absolute paths. Build runs at `/build/source/` but runtime serves from `/var/www/`, so caching during build breaks paths.
+- No `.env` file in the container — platform injects env as OS vars; a local `.env` would shadow them.
+- Artisan caches (`config:cache`, `route:cache`, `view:cache`) run in prod `initCommands`, not `buildCommands` — build path (`/build/source`) differs from runtime path (`/var/www`).
+- Dev setup installs Node via `prepareCommands` (`sudo -E zsc install nodejs@22`) — cached into the runtime image, not re-run on restart.
