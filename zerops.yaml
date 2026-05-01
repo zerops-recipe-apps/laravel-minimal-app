@@ -80,9 +80,12 @@ zerops:
         # signed URLs, mail links, and CSRF origin validation.
         # zeropsSubdomain is the platform-injected HTTPS URL.
         APP_URL: ${zeropsSubdomain}
-        # Stderr logging sends output to Zerops runtime log
-        # viewer — no log files to manage or rotate.
-        LOG_CHANNEL: stderr
+        # syslog routes Laravel logs to the Zerops runtime log
+        # viewer via the local0 facility — no log files to
+        # manage or rotate, and app logs stay tagged separately
+        # from PHP-FPM/nginx system messages.
+        LOG_CHANNEL: syslog
+        LOG_SYSLOG_FACILITY: local0
         LOG_LEVEL: warning
         # Cross-service references resolve at deploy time.
         # Pattern: ${hostname_varname} maps to the db service's
@@ -146,9 +149,10 @@ zerops:
         APP_ENV: local
         APP_DEBUG: "true"
         APP_URL: ${zeropsSubdomain}
-        # Debug-level stderr logging surfaces all framework
-        # events in the Zerops log viewer.
-        LOG_CHANNEL: stderr
+        # Debug-level syslog logging surfaces all framework
+        # events in the Zerops log viewer via local0 facility.
+        LOG_CHANNEL: syslog
+        LOG_SYSLOG_FACILITY: local0
         LOG_LEVEL: debug
         # Same DB wiring as prod — only mode flags differ.
         DB_CONNECTION: pgsql
