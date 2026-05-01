@@ -103,9 +103,12 @@ zerops:
         # signed URLs, mail links, and CSRF origin validation.
         # zeropsSubdomain is the platform-injected HTTPS URL.
         APP_URL: ${zeropsSubdomain}
-        # Stderr logging sends output to Zerops runtime log
-        # viewer — no log files to manage or rotate.
-        LOG_CHANNEL: stderr
+        # syslog routes Laravel logs to the Zerops runtime log
+        # viewer via the local0 facility — no log files to
+        # manage or rotate, and app logs stay tagged separately
+        # from PHP-FPM/nginx system messages.
+        LOG_CHANNEL: syslog
+        LOG_SYSLOG_FACILITY: local0
         LOG_LEVEL: warning
         # Cross-service references resolve at deploy time.
         # Pattern: ${hostname_varname} maps to the db service's
@@ -169,9 +172,10 @@ zerops:
         APP_ENV: local
         APP_DEBUG: "true"
         APP_URL: ${zeropsSubdomain}
-        # Debug-level stderr logging surfaces all framework
-        # events in the Zerops log viewer.
-        LOG_CHANNEL: stderr
+        # Debug-level syslog logging surfaces all framework
+        # events in the Zerops log viewer via local0 facility.
+        LOG_CHANNEL: syslog
+        LOG_SYSLOG_FACILITY: local0
         LOG_LEVEL: debug
         # Same DB wiring as prod — only mode flags differ.
         DB_CONNECTION: pgsql
@@ -203,5 +207,4 @@ Zerops terminates SSL at its L7 balancer and forwards requests via reverse proxy
 - **Cache commands in `initCommands`, not `buildCommands`** — `config:cache`, `route:cache`, and `view:cache` bake absolute paths into their cached files. The build container runs at `/build/source/` while the runtime serves from `/var/www/`. Caching during build produces paths like `/build/source/storage/...` that crash at runtime with "directory not found."
 - **`APP_KEY` is project-level** — Laravel's encryption key must be shared across all services that read the same database (sessions, encrypted columns). Set it once at project level in Zerops; do not add it per-service or in `zerops.yaml envVariables`.
 - **PDO PostgreSQL extension** — The `php-nginx` base image includes `pdo_pgsql` out of the box. No `prepareCommands` or `apk add` needed for PostgreSQL connectivity.
-- **Vite manifest missing on dev after fresh deploy** — the `dev` setup intentionally omits `npm run build` from `buildCommands` so the HMR workflow (`npm run dev` via SSH) stays fast. Any view rendering `@vite(...)` therefore 500s with `Vite manifest not found at: /var/www/public/build/manifest.json` on the first request after a `zerops_deploy`. Fix: run `ssh appdev 'cd /var/www && npm run build'` once after the deploy and before `zerops_verify` — SSHFS propagates the manifest into the container without a redeploy. For iterative work, `ssh appdev 'cd /var/www && nohup npm run dev > /tmp/vite.log 2>&1 &'` drops `public/build/hot` and Laravel routes asset URLs to the dev server. **Do NOT add `npm run build` to dev `buildCommands`** — it adds ~20–30 s to every `zcli push` and defeats the HMR-first design.
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
