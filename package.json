@@ -36,5 +36,8 @@
         "tailwindcss",
         "zerops",
         "postgresql"
-    ]
+    ],
+    "overrides": {
+        "shell-quote": "1.10.0"
+    }
 }
