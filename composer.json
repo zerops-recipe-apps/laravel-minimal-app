@@ -1,10 +1,15 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "zerops/laravel-minimal-app",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Minimal Laravel 13 recipe on Zerops with PostgreSQL and Vite/Tailwind frontend.",
+    "keywords": ["laravel", "zerops", "postgresql", "vite"],
     "license": "MIT",
+    "homepage": "https://github.com/zerops-recipe-apps/laravel-minimal-app",
+    "support": {
+        "issues": "https://github.com/zerops-recipe-apps/laravel-minimal-app/issues",
+        "source": "https://github.com/zerops-recipe-apps/laravel-minimal-app"
+    },
     "require": {
         "php": "^8.3",
         "laravel/framework": "^13.0",
