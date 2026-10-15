@@ -71,6 +71,7 @@ zerops:
           port: 80
           path: /health
       envVariables:
+        APP_KEY: ${APP_SECRET}
         APP_NAME: "Laravel Zerops"
         # Production mode — stack traces hidden, error pages
         # generic, optimizations enabled.
